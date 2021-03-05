@@ -25,8 +25,9 @@ CREATE TABLE `order` (
   `type` TEXT NOT NULL,
   `user` INTEGER NOT NULL,
   `status` TEXT DEFAULT 'OPEN',
+  `item` TEXT NOT NULL,
   `quantity` INTEGER NOT NULL,
-  `price` REAL NOT NULL,
+  `price` INTEGER NOT NULL,
   
   FOREIGN KEY (`type`) REFERENCES `order_type` (`code`),
   FOREIGN KEY (`status`) REFERENCES `order_status` (`code`),

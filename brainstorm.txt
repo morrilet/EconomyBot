@@ -1,11 +1,11 @@
 List of commands:
 
-$buy {item} / {quantity}@{price} -> Creates a buy order for the item. Note that price is per-unit.
-$sell {item} / {quantity}@{price} -> Creates a sell order for the item. Note that price is per-unit.
+$buy {item} {quantity}@{price} -> Creates a buy order for the item. Note that price is per-unit.
+$sell {item} {quantity}@{price} -> Creates a sell order for the item. Note that price is per-unit.
 $list -> Lists all active buy and sell orders with the user who opened the order, the item, and the quantity remaining, the price per-item, and the date / time listed.
 $give {user} {amount} -> Gives specified user currency from the current users account.
 $cancel {order#} -> Cancels a given buy or sell order. Remaining money is returned in the case of a buy order.
-$commit {order#} -> Indicates intention to interact with a buy or sell order. Will prompt the user who posted it to approve.
+$commit {order#} {quantity} -> Indicates intention to interact with a buy or sell order. Will prompt the user who posted it to approve.
 
 
 !give {user | all} {amount} -> Gives the specified user (or all users) freshly-minted currency. Admin use only.

@@ -8,10 +8,11 @@ client = discord.Client()
 MESSAGE_COMMANDS = {
     '$buy': commands.buy,
     '$sell': commands.sell,
-    '$commit': commands.commit,
+    '$offer': commands.offer,
     '$cancel': commands.cancel,
     '$list': commands.list,
     '$give': commands.give,
+    '$balance': commands.balance,
 }
 
 @client.event
