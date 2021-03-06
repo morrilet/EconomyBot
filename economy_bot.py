@@ -1,7 +1,14 @@
-import config
+import os
 import discord
 import commands
 import db
+
+try:
+    import config
+except ImportError:
+    config = object
+    config.DB_NAME = os.environ['DB_NAME']
+    config.DISCORD_KEY = os.environ['DISCORD_KEY']
 
 client = discord.Client()
 

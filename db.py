@@ -1,6 +1,13 @@
+import os
 import sqlite3
-import config
 import re
+
+try:
+    import config
+except ImportError:
+    config = object
+    config.DB_NAME = os.environ['DB_NAME']
+    config.DISCORD_KEY = os.environ['DISCORD_KEY']
 
 async def register_user_if_not_found(user):
     conn = sqlite3.connect(config.DB_NAME)
