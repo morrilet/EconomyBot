@@ -8,8 +8,8 @@ try:
     import config
 except ImportError:
     config = lambda: None
-    config.DB_NAME = os.environ['DB_NAME']
-    config.DISCORD_KEY = os.environ['DISCORD_KEY']
+    config.DB_NAME = os.getenv('DB_NAME')
+    config.DISCORD_KEY = os.getenv('DISCORD_KEY')
 
 # Get everything set up
 query = open('initial_schema.sql', 'r').read()
