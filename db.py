@@ -96,7 +96,6 @@ async def update_user(user_obj):
 
     if user_obj.get('id'):
         id = user_obj['id']
-        del user_obj['id']
     else:
         raise AttributeError('User object must have an ID.')
 
@@ -126,6 +125,23 @@ async def get_order_by_id(order_id):
 
     return result
 
+async def update_order(order_obj):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+
+    if order_obj.get('id'):
+        id = order_obj['id']
+    else:
+        raise AttributeError('Order object must have an ID.')
+
+    try:
+        update_string = ', '.join([f"{key}=?" for key in order_obj.keys()])
+        db.execute(f"UPDATE `order` SET {update_string} WHERE id = ?", (*order_obj.values(), id))
+        conn.commit()
+    finally:
+        db.close()
+        conn.close()
+
 async def create_interaction(user_id, order_id, quantity):
     conn = sqlite3.connect(config.DB_NAME)
     db = conn.cursor()
@@ -139,3 +155,53 @@ async def create_interaction(user_id, order_id, quantity):
         conn.close()
 
     return interaction_id
+
+async def get_interaction_by_id(interaction_id):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = None
+
+    try:
+        db.execute("SELECT * FROM `interaction` WHERE id = ?", (interaction_id,))
+        fields = map(lambda x:x[0], db.description)
+        values = db.fetchone()
+
+        if values:
+            result = dict(zip(fields, values))
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
+async def get_interactions_by_order_id(order_id):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = []
+
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("SELECT * FROM `interaction` WHERE `order` = ?", (order_id,))
+        result = [dict(row) for row in db]
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
+async def update_interaction(interaction_obj):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+
+    if interaction_obj.get('id'):
+        id = interaction_obj['id']
+    else:
+        raise AttributeError('Interaction object must have an ID.')
+
+    try:
+        update_string = ', '.join([f"`{key}`=?" for key in interaction_obj.keys()])
+        db.execute(f"UPDATE `interaction` SET {update_string} WHERE id = ?", (*interaction_obj.values(), id))
+        conn.commit()
+    finally:
+        db.close()
+        conn.close()

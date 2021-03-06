@@ -13,6 +13,7 @@ MESSAGE_COMMANDS = {
     '$list': commands.list,
     '$give': commands.give,
     '$balance': commands.balance,
+    '$approve': commands.approve,
 }
 
 @client.event
