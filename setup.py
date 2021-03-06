@@ -1,6 +1,7 @@
 '''
 This file should be run to set up the initial database structure on a new system.
 '''
+import os
 import sqlite3
 
 try:
