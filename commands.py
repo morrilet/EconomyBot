@@ -141,7 +141,25 @@ async def cancel(message):
         await message.channel.send(f'Order #{order_id} does not belong to you.')
 
 async def list(message):
-    await message.channel.send('LIST')
+    '''
+    Lists all active orders and their offers. Syntax is as follows: $list {buy | sell | all}
+    '''
+    values = _parse_options(message)
+
+    try:
+        option = values[0]
+
+        if len(values) > 1 or option not in ['buy', 'sell', 'all']:
+            raise IndexError
+        
+        if option == 'all':
+            await _list_order_type(message, 'BUY')
+            await _list_order_type(message, 'SELL')
+        else:
+            await _list_order_type(message, option.upper())
+
+    except IndexError:
+        await message.channel.send('Unable to parse list - check your syntax!')
 
 async def give(message):
     '''
@@ -154,11 +172,14 @@ async def give(message):
         target_name = values[0]
         amount = _dollars_to_cents(float(values[1]))
 
-        source_user = await db.get_user_by_id(source_id)
-        target_user = await db.get_user_by_name(target_name)
+        if len(values) != 2:
+            raise IndexError
 
         if amount <= 0:
             return await message.channel.send('Cannot give an amount less than or equal to zero.')
+
+        source_user = await db.get_user_by_id(source_id)
+        target_user = await db.get_user_by_name(target_name)
 
         if not target_user:
             return await message.channel.send(f'Cannot find user with name {target_name} - be sure to use the full syntax, eg: user#1234.)')
@@ -177,6 +198,39 @@ async def give(message):
     except IndexError:
         await message.channel.send(f'Unable to parse give - check your syntax!')
 
+async def admin_give(message):
+    '''
+    Give money to a user. Syntax is as follows: $give {user_name | all} {amount}
+    '''
+    values = _parse_options(message)
+    
+    if not message.author.guild_permissions.administrator:
+        return await ('Unable to perform `!give` - you must be an administrator to perform this command.')
+
+    try:
+        target_name = values[0]
+        amount = _dollars_to_cents(float(values[1]))
+
+        if len(values) != 2:
+            raise IndexError
+
+        if target_name == 'all':
+            users = await db.get_all_users()
+            for user in users:
+                # Ideally we'd just do this all in the DB but we're dealing with < 10 players for the prototype. This is fine.
+                user['money'] += amount
+                await db.update_user(user)
+            await message.channel.send(f"You've given {_cents_to_dollars(amount)} to all users.")
+        else:
+            target_user = await db.get_user_by_name(target_name)
+            if not target_user:
+                return await message.channel.send(f'Cannot find user with name {target_name} - be sure to use the full syntax, eg: user#1234.)')
+            target_user['money'] += amount
+            await db.update_user(target_user)
+            await message.channel.send(f"You've given {_cents_to_dollars(amount)} to {target_name}.")
+    except IndexError:
+        await message.channel.send(f'Unable to parse give - check your syntax!')
+
 async def balance(message):
     '''
     Returns the balance of the current user. Syntax is as follows: $balance
@@ -188,6 +242,28 @@ async def balance(message):
     
     user_obj = await db.get_user_by_id(message.author.id)
     await message.channel.send(f'Hello {message.author.name}, you have a balance of {_cents_to_dollars(user_obj["money"])}')
+
+async def admin_balance(message):
+    '''
+    Returns the balance of the a given user. Syntax is as follows: $balance
+    '''
+    values = _parse_options(message)
+
+    try:
+        if len(values) == 0:
+            return await balance(message)
+        elif len(values) != 1:
+            raise IndexError
+        
+        target_name = values[0]
+
+        user_obj = await db.get_user_by_name(target_name)
+        if not user_obj:
+            return await message.channel.send(f'Cannot find user with name {target_name} - be sure to use the full syntax, eg: user#1234.)')
+
+        await message.channel.send(f'User {target_name} has a balance of {_cents_to_dollars(user_obj["money"])}')
+    except IndexError:
+        return await message.channel.send(f'Unable to check balance - check your syntax!')
 
 def _parse_options(message):
     tokens = message.content.split(' ')
@@ -270,6 +346,28 @@ async def _approve_buy_order(message, order_obj, interaction_obj):
         if remaining_quantity != 0 else f"Buy order #{order_obj['id']} has been fulfilled."
     )
     await message.channel.send(f'{status_message}\n{value_message}\n{order_message}')
+
+async def _list_order_type(message, type):
+    orders = await db.get_open_orders_by_type(type.upper())
+    output = ''
+
+    for order in orders:
+        if output:
+            output += '\n'
+
+        pending_interactions = await db.get_pending_interactions_by_order_id(order['id'])
+        remaining_quantity = await _get_remaining_order_quantity(order['id'])
+        user = await db.get_user_by_id(order['user'])
+        
+        output += f"{user['name']}: [#{order['id']}] {type.upper()} {order['item']} x{remaining_quantity}@{_cents_to_dollars(order['price'])}"
+        for interaction in pending_interactions:
+            offerer = await db.get_user_by_id(interaction['user'])
+            output += f"\n    * {offerer['name']}: [#{interaction['id']}] {order['item']} x{interaction['quantity']}"
+
+    if len(orders) == 0:
+        await message.channel.send(f'No {type.lower()} orders to display.')
+    else:
+        await message.channel.send(output)
 
 # Using cents internally because 2.3 * 100 == 229.9997 for some reason. 
 # Rounding cents is less likely to cause an issue than rounding dollars.

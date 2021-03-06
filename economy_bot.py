@@ -14,6 +14,9 @@ MESSAGE_COMMANDS = {
     '$give': commands.give,
     '$balance': commands.balance,
     '$approve': commands.approve,
+
+    '!give': commands.admin_give,
+    '!balance': commands.admin_balance,
 }
 
 @client.event

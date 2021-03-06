@@ -90,6 +90,21 @@ async def get_user_by_name(user_name):
 
     return result
 
+async def get_all_users():
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = None
+
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("SELECT * FROM `user`")
+        result = [dict(row) for row in db]
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
 async def update_user(user_obj):
     conn = sqlite3.connect(config.DB_NAME)
     db = conn.cursor()
@@ -119,6 +134,36 @@ async def get_order_by_id(order_id):
 
         if values:
             result = dict(zip(fields, values))
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
+async def get_orders_by_type(type):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = []
+
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("SELECT * FROM `order` WHERE `type` = ?", (type,))
+        result = [dict(row) for row in db]
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
+async def get_open_orders_by_type(type):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = []
+
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("SELECT * FROM `order` WHERE (`type` = ? AND `status` = 'OPEN')", (type,))
+        result = [dict(row) for row in db]
     finally:
         db.close()
         conn.close()
@@ -182,6 +227,21 @@ async def get_interactions_by_order_id(order_id):
     try:
         db.row_factory = sqlite3.Row
         db.execute("SELECT * FROM `interaction` WHERE `order` = ?", (order_id,))
+        result = [dict(row) for row in db]
+    finally:
+        db.close()
+        conn.close()
+
+    return result
+
+async def get_pending_interactions_by_order_id(order_id):
+    conn = sqlite3.connect(config.DB_NAME)
+    db = conn.cursor()
+    result = []
+
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("SELECT * FROM `interaction` WHERE (`order` = ? AND `status` = 'PEND')", (order_id,))
         result = [dict(row) for row in db]
     finally:
         db.close()
