@@ -1,9 +1,14 @@
 '''
 This file should be run to set up the initial database structure on a new system.
 '''
-
-import config
 import sqlite3
+
+try:
+    import config
+except ImportError:
+    config = object
+    config.DB_NAME = os.environ['DB_NAME']
+    config.DISCORD_KEY = os.environ['DISCORD_KEY']
 
 # Get everything set up
 query = open('initial_schema.sql', 'r').read()
