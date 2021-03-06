@@ -7,7 +7,7 @@ import sqlite3
 try:
     import config
 except ImportError:
-    config = object
+    config = lambda: None
     config.DB_NAME = os.environ['DB_NAME']
     config.DISCORD_KEY = os.environ['DISCORD_KEY']
 
